@@ -1,0 +1,404 @@
+Day 1:
+block
+3 types
+ana
+fun
+pro
+
+declare
+a number;
+b number;
+c number;
+begin
+a:=&a;
+b:=&b;
+c:=a+b;
+dbms_output.put_line('sum='||c);
+end;
+
+
+declare
+eno number;
+name varchar2(20);
+j varchar2(20);
+s number(8,2);
+begin
+eno:=&eno;
+select ename,sal,job into name,s,j from emp where empno=eno;
+dbms_output.put_line('name='||name);
+dbms_output.put_line('Job='||j);
+dbms_output.put_line('salary'||s);
+end;
+
+declare 
+emp number;
+begin
+select * into emp from emp where empno=7900;
+dbms_output.put_line(emp);
+end;
+
+
+%type attribute
+================
+declare
+eno emp.empno%type;
+name emp.ename%type;
+j emp.job%type;
+s emp.sal%type;
+begin
+eno:=&eno;
+select ename,sal,job into name,s,j from emp where empno=eno;
+dbms_output.put_line('name='||name);
+dbms_output.put_line('Job='||j);
+dbms_output.put_line('salary'||s);
+end;
+
+
+
+
+Bind Variables
+===============
+variable name varchar;
+variable s number;
+begin
+select ename,sal into :name,:s from emp where empno=7900;
+end;
+
+print :name
+print :s
+
+begin 
+dbms_output.put_line(:name);
+dbms_output.put_line(:s);
+end;
+
+boolean variable
+================
+declare 
+flag boolean;
+a number :=10;
+result varchar2(20);
+begin 
+if (a>0) then
+flag:=true;
+result:='true';
+else
+flag:=false;
+result:='false';
+end if;
+dbms_output.put_line(result);
+end;
+
+constant and variable
+=====================
+declare 
+pi constant number(8,2):=3.2;
+begin
+pi:=100;
+dbms_output.put_line(pi);
+end;
+
+Nested Block
+=============
+declare
+a number;
+begin
+a:=&a;
+	declare 
+	b number;
+	begin
+	b:=&b;
+	dbms_output.put_line(a);
+	dbms_output.put_line(b);
+	end;
+dbms_output.put_line('outer block'||b);//scope error
+end;
+
+<<outer>>
+declare
+a number;
+begin
+a:=&a;
+	declare 
+	a number;
+	b number;
+	begin
+	a:=&a;
+	b:=&b;
+	dbms_output.put_line(outer.a+a+b);
+	end;
+dbms_output.put_line('outer block'||a);
+end;
+
+
+SQL> define eno =7900
+SQL> declare
+    name varchar2(20);
+   begin
+    select ename into name from emp where empno=&eno;
+eno:=1000;
+    dbms_output.put_line(name);
+   end;
+
+
+
+declare 
+a number :=100;
+begin 
+a:=200;
+a:=&num1;
+select ename into name from emp where empno=7900;
+
+variable j varchar2(20);
+
+begin
+:j:='&j';
+update demo1 set comm=1000 where job=:j;
+dbms_output.put_line('data updated');
+end;
+
+define j='MANAGER'
+
+update demo1 set comm=1000 where job=&j;
+
+rowtype
+========
+
+declare 
+e emp%rowtype;
+begin
+select * into e from emp where empno=7900;
+dbms_output.put_line(e.ename);
+dbms_output.put_line(e.sal);
+dbms_output.put_line(e.job);
+dbms_output.put_line(e.deptno);
+end;
+
+Day 2:
+implicit cursor
+===============
+declare
+eno number;
+e1 emp%rowtype;
+begin
+eno:=&eno;
+select * into e1 from emp  where empno=eno;
+if (SQL%found) then
+dbms_output.put_line('employee present');
+end if;
+exception
+when no_data_found then
+dbms_output.put_line('no data found');
+when others then
+dbms_output.put_line('error');
+end ;
+
+
+declare 
+j emp.job%type;
+cnt number;
+begin
+j:='&j';
+delete from demo1 where job=j;
+cnt:=sql%rowcount;
+dbms_output.put_line(cnt || ' rows deleted...');
+end;
+
+declare 
+j emp.job%type;
+cnt number;
+begin
+j:='&j';
+if (j='MANAGER') then
+update demo1 set comm=10 where job=j;
+elsif(j='ANALYST') then
+update demo1 set comm=20 where job=j; 
+else
+update demo1 set comm=30 where job=j;
+end if ;
+cnt:=sql%rowcount;
+dbms_output.put_line(cnt || ' rows deleted...');
+end;
+
+loops
+======
+declare 
+i number;
+begin
+i:=6;
+loop
+dbms_output.put_line(i);
+i:=i+1;
+exit when i>5 ;
+end loop;
+end;
+
+declare 
+i number;
+begin
+i:=6;
+loop
+exit when i>5 ;
+dbms_output.put_line(i);
+i:=i+1;
+end loop;
+end;
+
+declare 
+i number;
+begin
+i:=1;
+while( i<5) loop
+dbms_output.put_line(i);
+i:=i+1;
+end loop;
+end;
+
+declare 
+cnt number;
+begin
+cnt:=0;
+for i in 1..10 loop
+	if(i mod 2=0) then
+	dbms_output.put_line(i);
+	cnt:=cnt+1;
+	end if ;
+end loop;
+dbms_output.put_line(' tot even numbers='||cnt);
+end;
+
+begin 
+for i in reverse 1..10 loop
+dbms_output.put_line(i);
+end loop;
+end;
+
+declare
+i number;
+j number;
+begin
+i:=1;
+loop
+dbms_output.put_line('i='||i);
+i:=i+1;
+j:=1;
+	loop	
+	dbms_output.put_line('j='||j);
+	j:=j+1;
+	exit when j>4 ;
+	end loop;
+	dbms_output.put_line('end of inner loop');
+exit when i>4;
+end loop l1;
+dbms_output.put_line('end of outer loop');
+end;
+
+
+declare
+i number;
+j number;
+begin
+i:=1;
+<<l1>>
+loop
+dbms_output.put_line('i='||i);
+i:=i+1;
+j:=1;
+	<<l2>>
+	loop	
+	dbms_output.put_line('j='||j);
+	j:=j+1;
+	exit l1 when j=2; 
+	end loop l2;
+	dbms_output.put_line('end of inner loop');
+exit when i>4;
+end loop l1;
+dbms_output.put_line('end of outer loop');
+end;
+
+begin
+<<l1>>
+for i in  1..4 loop
+dbms_output.put_line('i='||i);
+	<<l2>>
+	for j in 1..4 loop
+	dbms_output.put_line('j='||j);
+	exit l1 when j=2;
+	end loop;
+end loop;
+end;
+
+record Type
+===========
+
+declare 
+type emp_rec is record
+(name varchar2(20),eno number,salary number(8,2));
+e1 emp_rec;
+begin
+e1.eno:=&a;
+select ename,sal into e1.name,e1.salary from emp where empno=e1.eno;
+dbms_output.put_line(e1.eno);
+dbms_output.put_line(e1.name);
+dbms_output.put_line(e1.salary);
+end;
+
+declare
+e emp%rowtype;
+begin
+select * into e from emp where empno=7900;
+dbms_output.put_line(e.ename);
+dbms_output.put_line(e.sal);
+dbms_output.put_line(e.hiredate);
+end;
+
+explicit cursor
+=================
+declare 
+cursor c1 is select * from emp;
+e emp%rowtype;
+begin
+open c1;
+dbms_output.put_line('empno   ename');
+dbms_output.put_line('==============');
+fetch c1 into e;
+while c1%found loop
+dbms_output.put_line(e.empno||' '||e.ename);
+fetch c1 into e;
+end loop;
+close c1;
+end;
+
+declare 
+cursor c1 is select * from emp;
+e emp%rowtype;
+begin
+open c1;
+dbms_output.put_line('empno   ename');
+dbms_output.put_line('==============');
+loop
+fetch c1 into e;
+dbms_output.put_line(e.empno||' '||e.ename);
+exit when c1%notfound;
+end loop;
+close c1;
+end;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
