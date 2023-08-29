@@ -385,6 +385,271 @@ close c1;
 end;
 
 
+day 3:
+======
+cursor with for loop
+=====================
+declare 
+cusror c1 is select * from emp where deptno=10;
+begin 
+for e in c1  loop
+dbms_output.put(e.empno||'\t');
+dbms_output.put(e.ename||'\t');
+dbms_output.put(e.sal||'\t');
+dbms_output.put_line(e.deptno);
+end loop;
+end ;
+
+cursor for loop with subquery
+==============================
+begin 
+for e in (select * from emp)  loop
+dbms_output.put(e.empno||' \n ');
+dbms_output.put(e.ename||'  ');
+dbms_output.put(e.sal||'  ');
+dbms_output.put_line(e.deptno);
+end loop;
+end;
+
+cursor with parameter
+=====================
+declare 
+e emp%rowtype;
+cursor c1 (dno number)
+is
+select * from emp where deptno=dno;
+begin
+open c1(10);
+loop
+fetch c1 into e;
+exit when c1%notfound;
+dbms_output.put(e.empno||' ');
+dbms_output.put(e.ename||'  ');
+dbms_output.put(e.sal||'  ');
+dbms_output.put_line(e.deptno); 
+end loop;
+close c1;
+open c1(30);
+loop
+fetch c1 into e;
+exit when c1%notfound;
+dbms_output.put(e.empno||' ');
+dbms_output.put(e.ename||'  ');
+dbms_output.put(e.sal||'  ');
+dbms_output.put_line(e.deptno); 
+end loop;
+close c1;
+end ;
+
+
+declare 
+e emp%rowtype;
+cursor c1 (dno number)
+is
+select * from emp where deptno=dno;
+d number;
+begin
+d:=&d;
+open c1(d);
+loop
+fetch c1 into e;
+exit when c1%notfound;
+dbms_output.put(e.empno||' ');
+dbms_output.put(e.ename||'  ');
+dbms_output.put(e.sal||'  ');
+dbms_output.put_line(e.deptno); 
+end loop;
+close c1;
+end ;
+
+
+declare 
+d number:=20;
+cursor c1 is select * from emp where deptno=d;
+begin 
+for e in c1  loop
+dbms_output.put(e.empno||'\t');
+dbms_output.put(e.ename||'\t');
+dbms_output.put(e.sal||'\t');
+dbms_output.put_line(e.deptno);
+end loop;
+end ;
+
+Exception handling
+=================
+declare 
+eno number;
+e emp%rowtype;
+begin
+eno:=&eno;
+select * into e from emp where empno=eno;
+dbms_output.put(e.empno||' ');
+dbms_output.put(e.ename||'');
+dbms_output.put(e.sal||'');
+dbms_output.put_line(e.deptno);
+exception 
+when others then
+dbms_output.put_line(sqlerrm);
+dbms_output.put_line(sqlcode);
+end;
+
+
+declare 
+eno number;
+e emp%rowtype;
+begin
+eno:=&eno;
+select * into e from emp where deptno=eno;
+dbms_output.put(e.empno||' ');
+dbms_output.put(e.ename||'');
+dbms_output.put(e.sal||'');
+dbms_output.put_line(e.deptno);
+exception 
+when no_data_found then
+dbms_output.put_line(' no employee present ');
+when too_many_rows then
+dbms_output.put_line('exact match returns more rows');
+when others then
+dbms_output.put_line(sqlerrm);
+dbms_output.put_line(sqlcode);
+end;
+
+declare 
+eno number;
+e emp%rowtype;
+begin
+eno:=&eno;
+select * into e from emp where deptno=eno;
+dbms_output.put(e.empno||' ');
+dbms_output.put(e.ename||'');
+dbms_output.put(e.sal||'');
+dbms_output.put_line(e.deptno);
+exception 
+when no_data_found then
+dbms_output.put_line(' no employee present ');
+when too_many_rows then
+dbms_output.put_line('exact match returns more rows');
+end;
+
+declare 
+dup_data exception;
+pragma exception_init(dup_data,-1);
+begin
+insert into emp (empno,ename) values (7900,'Manisha');
+dbms_output.put_line(sql%rowcount);
+exception 
+when dup_data then
+dbms_output.put_line('employee exist');
+dbms_output.put_line(sqlcode); 
+when others then
+dbms_output.put_line(sqlerrm);
+dbms_output.put_line(sqlcode);
+end;
+
+declare
+del_exception exception ;
+pragma exception_init(del_exception,-02292);
+begin
+delete from dept where dno=10;
+dbms_output.put_line(sql%rowcount);
+exception 
+when no_data_found then
+dbms_output.put_line('no data found');
+when del_exception then
+dbms_output.put_line('child rows found');
+when others then
+dbms_output.put_line(sqlerrm);
+end;
+
+user defined exception
+======================
+declare 
+nodata_exe exception;
+eno number;
+begin
+eno:=&eno;
+update demo1 set sal=0 where empno=eno;
+if(sql%notfound) then
+raise nodata_exe;
+end if;
+exception 
+when nodata_exe then
+dbms_output.put_line('employee does not  exist');
+when others then
+dbms_output.put_line(sqlerrm);
+end;
+
+declare
+eno number;
+e emp%rowtype;
+nodata_exe exception;
+begin
+eno:=&eno;
+select * into e from emp where empno=eno;
+	declare 
+	no number;
+	begin
+	no:=&no;
+	update demo1 set sal=0 where empno=no;
+	if(sql%notfound) then
+	raise nodata_exe;
+	end if;
+	exception
+	when no_data_found then
+	dbms_output.put_line('emp doesnot exist!!!!');
+	end;
+dbms_output.put_line(e.empno);
+dbms_output.put_line(e.ename);
+exception
+when too_many_rows then
+dbms_output.put_line('too many rows ');
+when nodata_exe then
+dbms_output.put_line('Outer block employee does not  exist');
+when others then
+dbms_output.put_line(sqlerrm);
+end;
+
+
+
+declare
+eno number;
+e emp%rowtype;
+nodata_exe exception;
+begin
+eno:=&eno;
+select * into e from emp where empno=eno;
+	declare 
+	no number;
+	begin
+	no:=&no;
+	update demo1 set sal=0 where empno=no;
+	if(sql%notfound) then
+	raise nodata_exe;
+	end if;
+	exception
+	when no_data_found then
+	dbms_output.put_line('emp doesnot exist!!!!');
+	when others then
+	dbms_output.put_line(sqlerrm);
+	end;
+dbms_output.put_line(e.empno);
+dbms_output.put_line(e.ename);
+exception
+when too_many_rows then
+dbms_output.put_line('too many rows ');
+when nodata_exe then
+dbms_output.put_line('Outer block employee does not  exist');
+when others then
+dbms_output.put_line(sqlerrm);
+end;
+
+
+
+ 
+
+
+
+
 
 
 
