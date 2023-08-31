@@ -382,8 +382,12 @@ dbms_output.put_line(e.empno||' '||e.ename);
 exit when c1%notfound;
 end loop;
 close c1;
+if c1%isopen then
+dbms_output.put_line('true');
+else
+dbms_output.put_line('false');
+end if;
 end;
-
 
 day 3:
 ======
@@ -643,21 +647,329 @@ when others then
 dbms_output.put_line(sqlerrm);
 end;
 
+Day 4:
+=======
+
+prodedure and function 
+
+in ---input paramenter
+out --output parameter
+inout --input and output parameter
+
+create or replace procedure pr1
+as 
+begin
+dbms_output.put_line('hello');
+end pr1;
+
+create or replace procedure pr1(name varchar2,msg out varchar2)
+as 
+begin
+dbms_output.put_line('hello'||name);
+msg:='pr1 mgs@@@@';
+end pr1;
+
+variable a varchar2(20);
+exec pr1('Manisha',:a);
+print :a;
+
+declare
+a varchar2(20);
+begin
+pr1('manisha',a);
+dbms_output.put_line(a);
+end;
+
+create or replace procedure pr1(eno number,
+name out varchar2,tot out number)
+as 
+s emp.sal%type;
+c emp.comm%type;
+begin
+select ename,sal,nvl(comm,0) into name ,s, c from emp where empno=eno;
+tot:=s+c;
+end pr1;
+
+declare
+name varchar2(20);
+tot number(8,2);
+eno number;
+begin
+eno:=&eno;
+pr1(eno,name,tot);
+dbms_output.put_line(name ||' earns a salary of '||tot);
+end ;
+
+create or replace procedure pr1(eno number,
+name out varchar2,tot out number)
+as 
+s emp.sal%type;
+c emp.comm%type;
+begin
+select ename,sal,nvl(comm,0) into name ,s, c from emp where empno=eno;
+tot:=s+c;
+exception
+when no_data_found then
+dbms_output.put_line('emp does not exist');
+when others then
+dbms_output.put_line(sqlerrm);
+end pr1;
+
+create or replace procedure pr1
+as 
+e emp%rowtype;
+cursor c1 (dno number)
+is
+select * from emp where deptno=dno;
+begin
+open c1(100);
+loop
+fetch c1 into e;
+exit when c1%notfound;
+dbms_output.put_line(e.ename||' '||e.deptno);
+end loop;
+close c1;
+exception
+when no_data_found then 
+dbms_output.put_line('no data present');
+when others then
+dbms_output.put_line(sqlerrm);
+end pr1;
+
+create or replace function fr1(eno number) return varchar2
+as
+name varchar2(20);
+begin 
+select ename into name from emp where empno=eno;
+return name;
+end fr1;
+
+declare 
+a varchar2(20);
+begin
+a:=fr1(7900);
+dbms_output.put_line(a);
+end;
+
+:a:=fr1(7900); // error
+
+select fr1(7900) from dual;
+
+
+package
+1.declare
+2.define 
+
+create or replace package hr
+is
+procedure inc_sal (eno number);
+function display (eno number) return varchar2;
+end hr; 
+
+create or replace package body hr
+is
+	procedure inc_sal (eno number)
+	is 
+	name varchar2(20);
+	s number;
+	begin
+	select ename,sal into name,s from emp where empno=eno;
+	update emp set sal=s+1000 where empno=eno;
+	if(sql%found) then
+	dbms_output.put_line('data updated');
+	end if;
+	end inc_sal;
+	function display(eno number) return varchar2
+	is 
+	name varchar2(20);
+	begin
+	select ename into name from emp where empno=eno;
+	return name;
+	end display;
+end hr;
+
+exec hr.inc_sal(7900);
+
+day 5:
+Collection in PLSQl
+1.index by table
+DECLARE
+     TYPE employee_table_struct IS TABLE OF
+            emp.ename%TYPE
+            INDEX BY BINARY_INTEGER;
+         first_name_table employee_table_struct;
+    BEGIN
+    select ename,empno into first_name_table(1),first_name_table (2) 
+from emp where empno=7566;
+dbms_output.put_line(first_name_table(1));
+dbms_output.put_line(first_name_table(2));
+END;
+ 
+
+DECLARE 
+   TYPE salary IS TABLE OF NUMBER INDEX BY VARCHAR2(20); 
+   salary_list salary; 
+   name   VARCHAR2(20); 
+BEGIN 
+   -- adding elements to the table 
+   salary_list('Rajnish') := 62000; 
+   salary_list('Minakshi') := 75000; 
+   salary_list('Martin') := 100000; 
+   salary_list('James') := 78000;  
+   
+   -- printing the table 
+   name := salary_list.FIRST; 
+   WHILE name IS NOT null LOOP 
+      dbms_output.put_line 
+      ('Salary of ' || name || ' is ' || TO_CHAR(salary_list(name))); 
+      name := salary_list.NEXT(name); 
+   END LOOP; 
+END; 
+
+
+DECLARE
+      TYPE employee_table_struct IS TABLE OF
+           emp%rowTYPE
+           INDEX BY BINARY_INTEGER; 
+      employee_table    employee_table_struct; 
+      CURSOR employee_cursor IS
+           SELECT * FROM emp ORDER BY empno; 
+      v_row      NUMBER := 1;
+   BEGIN
+       OPEN employee_cursor;
+       LOOP
+          EXIT WHEN employee_cursor%NOTFOUND;
+          fetch employee_cursor into employee_table(v_row); 
+           DBMS_OUTPUT.PUT(employee_table(0).empno);
+           DBMS_OUTPUT.PUT_LINE(employee_table(0).ename);
+                     v_row := v_row + 1;
+      END LOOP; 
+      CLOSE employee_cursor;
+   END;
+ 
+varray:
+========
+
+varray
+======
+Varray is a collection method in which the size of the array is fixed. The array size cannot be exceeded than its fixed value. The subscript of the Varray is of a numeric value. Following are the attributes of Varrays.
+
+DECLARE 
+   type namesarray IS VARRAY(6) OF VARCHAR2(10); 
+   type grades IS VARRAY(5) OF INTEGER; 
+   names namesarray; 
+   marks grades; 
+   total integer; 
+BEGIN 
+   names := namesarray('Kavita', 'Pritam', 'Ayan', 'Rishav', 'Aziz',
+'Manisha'); 
+   marks:= grades(98, 97, 78, 87, 92); 
+   total := names.count; 
+dbms_output.put_line('markes='||marks.count);
+   dbms_output.put_line('Total '|| total || ' Students'); 
+   FOR i in 1 .. total LOOP 
+      dbms_output.put_line('Student: ' || names(i) || ' 
+      Marks: ' || marks(i)); 
+   END LOOP; 
+exception 
+when others then 
+dbms_output.put_line(sqlerrm);
+dbms_output.put_line(sqlcode);
+END; 
+
+Trigger:
+========
+CREATE OR REPLACE TRIGGER t1
+BEFORE INSERT OR UPDATE OR DELETE ON emp
+BEGIN
+IF (TO_CHAR (SYSDATE,'DY') IN ('THU','FRI')) OR
+(TO_CHAR (SYSDATE, 'HH24') NOT BETWEEN '08' AND '18') 
+THEN
+IF DELETING THEN 
+RAISE_APPLICATION_ERROR (-20502,'You may delete from 
+EMPLOYEES table only during business hours.');
+ELSIF INSERTING THEN
+RAISE_APPLICATION_ERROR (-20500,'You may insert into 
+EMPLOYEES table only during business hours.');
+ELSIF UPDATING ('SALARY') THEN
+RAISE_APPLICATION_ERROR (-20503,'You may update 
+SALARY only during business hours.');
+ELSE
+RAISE_APPLICATION_ERROR (-20504,'You may update 
+EMPLOYEES table only during normal hours.');
+END IF;
+END IF;
+END;
+
+
+create or replace trigger t11
+after 
+delete or update on copy_emp
+for each row
+declare
+pragma autonomous_transaction;
+begin
+ insert into del(id,name,oldsal,newsal)
+ values(:old.empno,:old.ename,:old.sal,:new.sal);
+commit;
+end;
+
+create or replace trigger t12
+after delete or update on old_emp
+for each row
+begin
+ if deleting then
+ insert into del(id,name,oldsal,newsal)
+ values(:old.empno,:old.ename,:old.sal,:new.sal);
+ elsif updating then
+  insert into copy(id,name,old_sal,new_sal)
+    values(:old.empno,:old.ename,:old.sal,:new.sal);
+ end if;
+end;
+
+
+
+trigger on view
+===============
+create or replace view emp_detail 
+as
+select e.empno,e.ename,e.sal,e.deptno,e.job,d.dname
+from emp e,dept d
+where e.deptno=d.deptno;
+
+
+create table new_emp1 as
+select empno,ename,sal,deptno,job,hiredate
+from emp;
+
+create table new_dept as
+select e.deptno,dname,sum(e.sal)tot_dept_sal
+from emp e,dept d
+group by e.deptno,d.dname
+order by 1;
+
+create or replace trigger viewtrigger
+instead of insert or update or delete on emp_detail
+for each row
+begin
+ if inserting then
+   insert into new_emp1 values  (:new.empno,:new.ename,:new.sal,:new.deptno,:new.job,sysdate);
+update new_dept set tot_dept_sal=tot_dept_sal+:new.sal
+where deptno=:new.deptno;
+end if;
+end viewtrigger;
+
+
+
+
+
+
+
+
+
 
 
  
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
